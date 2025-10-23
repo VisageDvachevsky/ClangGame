@@ -1,51 +1,30 @@
 #pragma once
-#include <stddef.h>
+
 #include <stdbool.h>
 
-typedef struct GameConfig GameConfig;
-typedef struct GameState  GameState;
-typedef struct Stats      Stats;
+typedef struct {
+    int difficulty;
+    int max_number;
+    int max_attempts;
+} game_config_t;
 
-struct GameConfig {
-    int max_value;
-    int max_levels;
-    int base_hints;
-};
-
-struct GameState {
-    int level;
+typedef struct {
     int target;
     int attempts;
-    int hints_left;
-    bool finished;
-};
+    int low_bound;
+    int high_bound;
+    int *history;
+    int history_cap;
+    int history_sz;
+} game_state_t;
 
-struct Stats {
-    double rating;
-    int games_played;
-    int wins;
-};
+void game_config_init(game_config_t *cfg);
+void game_config_set_difficulty(game_config_t *cfg, int difficulty);
+int  game_optimal_attempts(int max_number);
 
-void rng_seed(void);
-int rng_range(int lo, int hi);
+void game_state_init(game_state_t *state, const game_config_t *cfg);
+void game_state_free(game_state_t *state);
+void game_state_record_guess(game_state_t *state, int guess);
+void game_state_update_bounds(game_state_t *state, int guess);
 
-void ui_clear(void);
-void ui_title(void);
-void ui_print(const char *s);
-void ui_printf(const char *fmt, ...);
-int  ui_read_int(const char *prompt);
-char ui_read_char(const char *prompt);
-
-double optimal_attempts(int max_value);
-double progress_ratio(const GameState *st, int max_value);
-
-void stats_init(Stats *stats);
-void stats_update(Stats *stats, const GameState *gs, int max_value);
-void stats_print(const Stats *stats);
-
-void game_init(GameState *st, const GameConfig *cfg);
-void game_new_round(GameState *st, const GameConfig *cfg);
-bool game_handle_guess(GameState *st, int guess);
-int  game_hint(GameState *st, int max_value);
-
-int parse_positive_int(const char *s, int fallback);
+double game_calc_optimality(const game_config_t *cfg, const game_state_t *state);
